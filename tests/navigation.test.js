@@ -1,13 +1,16 @@
 import { handleAction } from "../src/core/navigation.js";
+import { assertEqual } from "./assert.js";
 
 global.window = {
   location: {
     hash: ""
   },
   open: (url, target) => {
-    console.log("OPEN:", url, target);
+    global.__lastOpen = { url, target };
   }
 };
+
+window.location.hash = "";
 
 handleAction({
   type: "navigate",
@@ -16,8 +19,13 @@ handleAction({
   mode: "same"
 });
 
-console.log(window.location.hash);
-// expected: "DB_Sales?f_status=Active"
+assertEqual(
+  window.location.hash,
+  "DB_Sales?f_status=Active",
+  "Navigate (same tab)"
+);
+
+global.__lastOpen = null;
 
 handleAction({
   type: "navigate",
@@ -25,7 +33,12 @@ handleAction({
   params: { status: "Active" },
   mode: "new"
 });
-// OPEN: #DB_Sales?f_status=Active _blank
+
+assertEqual(
+  global.__lastOpen,
+  { url: "#DB_Sales?f_status=Active", target: "_blank" },
+  "Navigate (new tab)"
+);
 
 window.location.hash = "DB_Sales";
 
@@ -34,8 +47,11 @@ handleAction({
   params: { status: "Live" }
 });
 
-console.log(window.location.hash);
-// DB_Sales?f_status=Live
+assertEqual(
+  window.location.hash,
+  "DB_Sales?f_status=Live",
+  "Apply filter"
+);
 
 window.location.hash = "DB_Sales?f_status=Live";
 
@@ -43,6 +59,9 @@ handleAction({
   type: "clearFilter"
 });
 
-console.log(window.location.hash);
-// DB_Sales
+assertEqual(
+  window.location.hash,
+  "DB_Sales",
+  "Clear filter"
+);
 
